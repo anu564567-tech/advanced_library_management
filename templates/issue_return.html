@@ -1,0 +1,774 @@
+{% extends "base.html" %}
+
+{% block title %}Issue/Return Books - Library Management System{% endblock %}
+{% block page_title %}Issue/Return Books{% endblock %}
+
+{% block content %}
+<div class="page-content">
+    <div class="container-fluid">
+        <!-- Issue Book Section -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="glass-card">
+                    <div class="card-header">
+                        <h4 class="mb-0">
+                            <i class="fas fa-arrow-right me-2"></i>
+                            Issue Book to Student
+                        </h4>
+                    </div>
+                    
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                                    <i class="fas fa-{% if category == 'success' %}check-circle{% elif category == 'danger' or category == 'error' %}exclamation-circle{% elif category == 'warning' %}exclamation-triangle{% else %}info-circle{% endif %}"></i>
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+                    
+                    <form method="POST" action="{{ url_for('issue_book') }}">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="user_id" class="form-label">Student *</label>
+                                    <div class="autocomplete-container">
+                                        <input type="text" class="form-control autocomplete-input" id="user_id_input" placeholder="Type to search student..." required>
+                                        <select class="form-select" id="user_id" name="user_id" style="display: none;">
+                                            <option value="">Select Student</option>
+                                        </select>
+                                        <div class="autocomplete-dropdown" id="user_id_dropdown"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="book_id" class="form-label">Book *</label>
+                                    <div class="autocomplete-container">
+                                        <input type="text" class="form-control autocomplete-input" id="book_id_input" placeholder="Type to search book..." required>
+                                        <select class="form-select" id="book_id" name="book_id" style="display: none;">
+                                            <option value="">Select Book</option>
+                                        </select>
+                                        <div class="autocomplete-dropdown" id="book_id_dropdown"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-success" onclick="validateAndSubmitForm(event)">
+                                <i class="fas fa-arrow-right me-2"></i>
+                                Issue Book
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Return Book Section -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="glass-card">
+                    <div class="card-header">
+                        <h4 class="mb-0">
+                            <i class="fas fa-arrow-left me-2"></i>
+                            Return Book
+                        </h4>
+                    </div>
+                    
+                    <div class="table-responsive">
+                        <table class="table table-dark table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Book Title</th>
+                                    <th>Student</th>
+                                    <th>Issue Date</th>
+                                    <th>Due Date</th>
+                                    <th>Status</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for issued in issued_books %}
+                                <tr data-issue-date="{{ issued.issue_date.strftime('%Y-%m-%d') }}" data-due-date="{{ issued.due_date.strftime('%Y-%m-%d') }}" {% if issued.is_returned and issued.return_date %}data-return-date="{{ issued.return_date.strftime('%Y-%m-%d') }}"{% endif %} data-is-returned="{{ issued.is_returned }}">
+                                    <td>{{ issued.book.title }}</td>
+                                    <td>{{ issued.user.name }}</td>
+                                    <td>{{ issued.issue_date.strftime('%Y-%m-%d') }}</td>
+                                    <td>{{ issued.due_date.strftime('%Y-%m-%d') }}</td>
+                                    <td>
+                                        {% if issued.is_returned %}
+                                            <span class="badge bg-success">Returned</span>
+                                        {% elif issued.due_date.date() < datetime.now().date() %}
+                                            <span class="badge bg-danger">Overdue</span>
+                                        {% else %}
+                                            <span class="badge bg-warning">Issued</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if not issued.is_returned %}
+                                        <button type="button" class="btn btn-sm btn-primary return-book-btn" data-issued-id="{{ issued.id }}">
+                                            <i class="fas fa-undo"></i> Return
+                                        </button>
+                                        {% else %}
+                                            <span class="text-muted">Already returned</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="6" class="text-center">No issued books found</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics -->
+        <div class="row">
+            <div class="col-md-3">
+                <div class="stat-card" onclick="filterIssuedBooks('all')" style="cursor: pointer;" data-filter="all">
+                    <div class="stat-icon bg-info">
+                        <i class="fas fa-book"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3>{{ total_issued or 0 }}</h3>
+                        <p>Total Issued</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card" onclick="filterIssuedBooks('overdue')" style="cursor: pointer;" data-filter="overdue">
+                    <div class="stat-icon bg-warning">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3>{{ overdue_count or 0 }}</h3>
+                        <p>Overdue</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card" onclick="filterIssuedBooks('returned-today')" style="cursor: pointer;" data-filter="returned-today">
+                    <div class="stat-icon bg-success">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3>{{ returned_today or 0 }}</h3>
+                        <p>Returned Today</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card" onclick="filterIssuedBooks('issued')" style="cursor: pointer;" data-filter="issued">
+                    <div class="stat-icon bg-primary">
+                        <i class="fas fa-exchange-alt"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3>{{ total_issued or 0 }}</h3>
+                        <p>Currently Issued</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-label {
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.form-control,
+.form-select {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+    border-radius: 8px;
+    padding: 10px 15px;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus,
+.form-select:focus {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    color: white;
+}
+
+.form-select option {
+    background: #2c3e50;
+    color: white;
+}
+
+.form-actions {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.card-header {
+    background: rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 20px;
+    margin: -20px -20px 20px -20px;
+    border-radius: 15px 15px 0 0;
+}
+
+.card-header h4 {
+    color: white;
+    margin: 0;
+}
+
+.table {
+    color: white;
+}
+
+.table th {
+    border-color: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 600;
+}
+
+.table td {
+    border-color: rgba(255, 255, 255, 0.05);
+}
+
+.table-hover tbody tr:hover {
+    background: rgba(121, 9, 9, 0.05);
+}
+
+.stat-card {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 15px;
+    padding: 25px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+}
+
+.stat-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 24px;
+}
+
+.stat-content h3 {
+    color: white;
+    font-size: 32px;
+    font-weight: 700;
+    margin-bottom: 5px;
+}
+
+.stat-content p {
+    color: rgba(255, 255, 255, 0.7);
+    margin-bottom: 0;
+}
+
+.alert {
+    border-radius: 10px;
+    border: none;
+    margin-bottom: 20px;
+}
+
+/* Autocomplete styles */
+.autocomplete-container {
+    position: relative;
+}
+
+.autocomplete-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: rgba(30, 30, 46, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 1000;
+    display: none;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.autocomplete-item {
+    padding: 12px 16px;
+    cursor: pointer;
+    color: white;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.2s ease;
+    font-size: 0.9rem;
+}
+
+.autocomplete-item:last-child {
+    border-bottom: none;
+}
+
+.autocomplete-item:hover,
+.autocomplete-item-selected {
+    background: rgba(102, 126, 234, 0.3);
+    color: white;
+}
+
+.autocomplete-input {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+    border-radius: 10px;
+    padding: 12px 16px;
+}
+
+.autocomplete-input:focus {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(102, 126, 234, 0.5);
+    color: white;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+.autocomplete-input::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.autocomplete-input.is-invalid {
+    border-color: #dc3545;
+    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+}
+
+.autocomplete-input.is-invalid:focus {
+    border-color: #dc3545;
+    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+}
+</style>
+
+<!-- Data passed from Flask - using script tags to avoid parsing issues -->
+<script type="application/json" id="students-data">
+{{ students_data|safe }}
+</script>
+<script type="application/json" id="books-data">
+{{ books_data|safe }}
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Parse JSON data from script tags
+    const studentsElement = document.getElementById('students-data');
+    const booksElement = document.getElementById('books-data');
+    
+    let students = [];
+    let books = [];
+    
+    try {
+        if (studentsElement && studentsElement.textContent) {
+            students = JSON.parse(studentsElement.textContent);
+        }
+        if (booksElement && booksElement.textContent) {
+            books = JSON.parse(booksElement.textContent);
+        }
+        console.log('Data loaded successfully');
+        console.log('Students:', students);
+        console.log('Books:', books);
+    } catch (error) {
+        console.error('Error loading data:', error);
+        // Fallback data for testing
+        students = [
+            { id: 1, name: "John Doe", roll_number: "ST001" },
+            { id: 2, name: "Jane Smith", roll_number: "ST002" }
+        ];
+        books = [
+            { id: 1, title: "Test Book", author: "Test Author", available: 5 },
+            { id: 2, title: "Another Book", author: "Another Author", available: 3 }
+        ];
+    }
+    
+    // Initialize autocomplete for student field
+    initAutocomplete('user_id_input', 'user_id_dropdown', 'user_id', students, 
+                    function(item) { return `${item.name} (${item.roll_number})`; },
+                    function(item) { return `${item.name.toLowerCase()} ${item.roll_number.toLowerCase()}`; });
+    
+    // Initialize autocomplete for book field
+    initAutocomplete('book_id_input', 'book_id_dropdown', 'book_id', books,
+                    function(item) { return `${item.title} - ${item.author} (${item.available} available)`; },
+                    function(item) { return `${item.title.toLowerCase()} ${item.author.toLowerCase()}`; });
+});
+
+function initAutocomplete(inputId, dropdownId, selectId, data, displayFunc, searchFunc) {
+    const input = document.getElementById(inputId);
+    const dropdown = document.getElementById(dropdownId);
+    const select = document.getElementById(selectId);
+    let selectedIndex = -1;
+    
+    input.addEventListener('input', function() {
+        const query = this.value.toLowerCase();
+        selectedIndex = -1;
+        
+        if (query.length === 0) {
+            dropdown.innerHTML = '';
+            dropdown.style.display = 'none';
+            select.value = '';
+            return;
+        }
+        
+        const filtered = data.filter(item => searchFunc(item).includes(query));
+        
+        if (filtered.length === 0) {
+            dropdown.innerHTML = '<div class="autocomplete-item">No results found</div>';
+            dropdown.style.display = 'block';
+            return;
+        }
+        
+        dropdown.innerHTML = filtered.map((item, index) => 
+            `<div class="autocomplete-item" data-index="${index}" data-value="${item.id}">${displayFunc(item)}</div>`
+        ).join('');
+        
+        dropdown.style.display = 'block';
+        
+        // Add click handlers to dropdown items
+        dropdown.querySelectorAll('.autocomplete-item').forEach(item => {
+            item.addEventListener('click', function() {
+                const itemId = this.getAttribute('data-value');
+                const itemText = this.textContent;
+                
+                console.log('Selected item:', itemId, itemText);
+                
+                // Set input value
+                input.value = itemText;
+                
+                // Set select value - ensure it's a string
+                select.value = String(itemId);
+                
+                console.log('After selection - Input value:', input.value);
+                console.log('After selection - Select value:', select.value);
+                console.log('Select value type:', typeof select.value);
+                console.log('Select value length:', select.value.length);
+                
+                // Add option to select if it doesn't exist
+                if (!select.querySelector(`option[value="${itemId}"]`)) {
+                    const option = document.createElement('option');
+                    option.value = itemId;
+                    option.textContent = itemText;
+                    option.selected = true;
+                    select.appendChild(option);
+                } else {
+                    // Update existing option
+                    const option = select.querySelector(`option[value="${itemId}"]`);
+                    option.selected = true;
+                }
+                
+                dropdown.style.display = 'none';
+                selectedIndex = -1;
+                
+                // Trigger change event to ensure form validation works
+                select.dispatchEvent(new Event('change'));
+                
+                console.log('Change event triggered');
+                console.log('Final select value:', select.value);
+            });
+        });
+    });
+    
+        
+    // Simple debugging for form submissions
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('DOM loaded, checking return forms');
+        
+        document.querySelectorAll('form').forEach(form => {
+            if (form.action && form.action.includes('return-book')) {
+                console.log('Found return form:', form.action);
+            }
+        });
+    });
+    
+    // Keyboard navigation
+    input.addEventListener('keydown', function(e) {
+        const items = dropdown.querySelectorAll('.autocomplete-item');
+        
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            selectedIndex = Math.min(selectedIndex + 1, items.length - 1);
+            updateSelection(items, selectedIndex);
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            selectedIndex = Math.max(selectedIndex - 1, -1);
+            updateSelection(items, selectedIndex);
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            if (selectedIndex >= 0 && items[selectedIndex]) {
+                items[selectedIndex].click();
+            }
+        } else if (e.key === 'Escape') {
+            dropdown.style.display = 'none';
+            selectedIndex = -1;
+        }
+    });
+    
+    // Hide dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!input.contains(e.target) && !dropdown.contains(e.target)) {
+            dropdown.style.display = 'none';
+        }
+    });
+}
+
+function updateSelection(items, selectedIndex) {
+    items.forEach((item, index) => {
+        if (index === selectedIndex) {
+            item.classList.add('autocomplete-item-selected');
+        } else {
+            item.classList.remove('autocomplete-item-selected');
+        }
+    });
+}
+
+// Return book function
+function returnBook(issuedId) {
+    console.log('Returning book with ID:', issuedId);
+    
+    // Create a form dynamically to submit the return request
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '/return-book/' + issuedId;
+    
+    // Submit the form
+    document.body.appendChild(form);
+    form.submit();
+    
+    // Remove the form after submission
+    document.body.removeChild(form);
+}
+
+// Filter issued books function
+function filterIssuedBooks(filterType) {
+    console.log('Filtering issued books by:', filterType);
+    
+    const allRows = document.querySelectorAll('tbody tr');
+    const allStatCards = document.querySelectorAll('.stat-card[data-filter]');
+    
+    // Remove active state from all stat cards
+    allStatCards.forEach(card => {
+        card.style.border = '';
+        card.style.transform = '';
+    });
+    
+    // Highlight active filter card
+    if (filterType !== 'all') {
+        const activeCard = document.querySelector(`.stat-card[data-filter="${filterType}"]`);
+        if (activeCard) {
+            activeCard.style.border = '2px solid #667eea';
+            activeCard.style.transform = 'scale(1.02)';
+        }
+    }
+    
+    // Get today's date for comparison
+    const today = new Date();
+    const todayString = today.toISOString().split('T')[0]; // YYYY-MM-DD format
+    console.log('Today date:', todayString);
+    
+    let visibleCount = 0;
+    
+    allRows.forEach(row => {
+        let shouldShow = false;
+        
+        // Skip the "No issued books found" row
+        if (row.cells.length === 1 && row.cells[0].colSpan === 6) {
+            shouldShow = false;
+        } else {
+            // Get data from attributes for more accurate filtering
+            const isReturned = row.getAttribute('data-is-returned') === 'True';
+            const issueDate = row.getAttribute('data-issue-date');
+            const dueDate = row.getAttribute('data-due-date');
+            const returnDate = row.getAttribute('data-return-date');
+            
+            const statusCell = row.cells[4]; // Status column
+            const statusBadge = statusCell.querySelector('.badge');
+            const statusText = statusBadge ? statusBadge.textContent.trim().toLowerCase() : '';
+            
+            console.log(`Row: ${row.cells[0].textContent.trim()}, Status: ${statusText}, Returned: ${isReturned}, Issue: ${issueDate}, Due: ${dueDate}, Return: ${returnDate}`);
+            
+            switch(filterType) {
+                case 'all':
+                    shouldShow = true;
+                    break;
+                case 'issued':
+                    shouldShow = !isReturned && statusText.includes('issued');
+                    break;
+                case 'overdue':
+                    shouldShow = !isReturned && statusText.includes('overdue');
+                    break;
+                case 'returned-today':
+                    // Check if book is returned and return date is today
+                    shouldShow = isReturned && returnDate === todayString;
+                    break;
+            }
+        }
+        
+        row.style.display = shouldShow ? '' : 'none';
+        if (shouldShow) visibleCount++;
+    });
+    
+    console.log(`Filter ${filterType}: ${visibleCount} rows visible`);
+    
+    // Show message if no results
+    const noResultsRow = Array.from(allRows).find(row => row.cells.length === 1 && row.cells[0].colSpan === 6);
+    
+    if (visibleCount === 0 && noResultsRow) {
+        noResultsRow.style.display = '';
+        noResultsRow.cells[0].textContent = 'No books found for this filter';
+    } else if (noResultsRow) {
+        noResultsRow.style.display = 'none';
+    }
+}
+
+// Add event listeners for return book buttons
+document.addEventListener('DOMContentLoaded', function() {
+    const returnButtons = document.querySelectorAll('.return-book-btn');
+    returnButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const issuedId = this.getAttribute('data-issued-id');
+            returnBook(issuedId);
+        });
+    });
+    
+    // Initialize with 'all' filter
+    filterIssuedBooks('all');
+});
+
+// Simple form validation function
+function validateAndSubmitForm(event) {
+    event.preventDefault();
+    
+    const userSelect = document.getElementById('user_id');
+    const bookSelect = document.getElementById('book_id');
+    const userInput = document.getElementById('user_id_input');
+    const bookInput = document.getElementById('book_id_input');
+    
+    console.log('=== SIMPLE FORM VALIDATION ===');
+    console.log('User select value:', userSelect.value);
+    console.log('Book select value:', bookSelect.value);
+    console.log('User input value:', userInput.value);
+    console.log('Book input value:', bookInput.value);
+    
+    // Check if values are selected
+    if (!userSelect.value || userSelect.value === '' || !bookSelect.value || bookSelect.value === '') {
+        alert('Please select both a student and a book from the dropdown lists.');
+        return false;
+    }
+    
+    // If validation passes, submit the form
+    console.log('Validation passed, submitting form...');
+    document.querySelector('form').submit();
+    return true;
+}
+
+// Form validation before submission
+document.querySelector('form').addEventListener('submit', function(e) {
+    const userSelect = document.getElementById('user_id');
+    const bookSelect = document.getElementById('book_id');
+    const userInput = document.getElementById('user_id_input');
+    const bookInput = document.getElementById('book_id_input');
+    
+    console.log('=== FORM SUBMISSION VALIDATION ===');
+    console.log('User select value:', userSelect.value);
+    console.log('Book select value:', bookSelect.value);
+    console.log('User input value:', userInput.value);
+    console.log('Book input value:', bookInput.value);
+    console.log('User select value type:', typeof userSelect.value);
+    console.log('Book select value type:', typeof bookSelect.value);
+    console.log('User select value trimmed:', userSelect.value.trim());
+    console.log('Book select value trimmed:', bookSelect.value.trim());
+    console.log('User select value === "":', userSelect.value === "");
+    console.log('Book select value === "":', bookSelect.value === "");
+    console.log('User select value === null:', userSelect.value === null);
+    console.log('Book select value === null:', bookSelect.value === null);
+    console.log('User select value === undefined:', userSelect.value === undefined);
+    console.log('Book select value === undefined:', bookSelect.value === undefined);
+    
+    // More robust validation
+    const userValid = userSelect.value && userSelect.value.trim() !== "" && userSelect.value !== null && userSelect.value !== undefined;
+    const bookValid = bookSelect.value && bookSelect.value.trim() !== "" && bookSelect.value !== null && bookSelect.value !== undefined;
+    
+    console.log('User valid:', userValid);
+    console.log('Book valid:', bookValid);
+    
+    if (!userValid || !bookValid) {
+        e.preventDefault();
+        
+        console.log('=== VALIDATION FAILED ===');
+        
+        let errorMessage = 'Please select both a student and a book.';
+        let focusField = null;
+        
+        if (!userValid && !bookValid) {
+            errorMessage = 'Please select both a student and a book.';
+            focusField = userInput;
+        } else if (!userValid) {
+            errorMessage = 'Please select a student from the dropdown.';
+            focusField = userInput;
+        } else if (!bookValid) {
+            errorMessage = 'Please select a book from the dropdown.';
+            focusField = bookInput;
+        }
+        
+        // Create and show error message
+        const alertDiv = document.createElement('div');
+        alertDiv.className = 'alert alert-danger alert-dismissible fade show';
+        alertDiv.innerHTML = `
+            <i class="fas fa-exclamation-circle"></i>
+            ${errorMessage}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        
+        // Insert at the top of the form
+        this.insertBefore(alertDiv, this.firstChild);
+        
+        // Focus on the appropriate input field
+        if (focusField) {
+            focusField.focus();
+            focusField.classList.add('is-invalid');
+            setTimeout(() => {
+                focusField.classList.remove('is-invalid');
+            }, 3000);
+        }
+        
+        // Scroll to top to show error
+        alertDiv.scrollIntoView({ behavior: 'smooth' });
+        
+        // Auto-remove after 5 seconds
+        setTimeout(() => {
+            if (alertDiv.parentNode) {
+                alertDiv.remove();
+            }
+        }, 5000);
+        
+        return false;
+    }
+    
+    return true;
+});
+</script>
+{% endblock %}

@@ -1,1 +1,222 @@
+{% extends "base.html" %}
 
+{% block title %}Add New Book - Library Management System{% endblock %}
+{% block page_title %}Add New Book{% endblock %}
+
+{% block content %}
+<div class="page-content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <div class="glass-card">
+                    <div class="card-header">
+                        <h4 class="mb-0">
+                            <i class="fas fa-plus-circle me-2"></i>
+                            Add New Book to Library
+                        </h4>
+                    </div>
+                    
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                                    <i class="fas fa-{% if category == 'success' %}check-circle{% elif category == 'danger' or category == 'error' %}exclamation-circle{% elif category == 'warning' %}exclamation-triangle{% else %}info-circle{% endif %}"></i>
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+                    
+                    <form method="POST" class="book-form">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="isbn" class="form-label">ISBN Number *</label>
+                                    <input type="text" class="form-control" id="isbn" name="isbn" required placeholder="978-0-13-468599-1">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="title" class="form-label">Book Title *</label>
+                                    <input type="text" class="form-control" id="title" name="title" required placeholder="Effective Python">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="author" class="form-label">Author *</label>
+                                    <input type="text" class="form-control" id="author" name="author" required placeholder="Brett Slatkin">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="publication" class="form-label">Publisher</label>
+                                    <input type="text" class="form-control" id="publication" name="publication" placeholder="Addison-Wesley">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="category" class="form-label">Category</label>
+                                    <select class="form-select" id="category" name="category">
+                                        <option value="">Select Category</option>
+                                        <option value="Programming">Programming</option>
+                                        <option value="Computer Science">Computer Science</option>
+                                        <option value="Mathematics">Mathematics</option>
+                                        <option value="Physics">Physics</option>
+                                        <option value="Chemistry">Chemistry</option>
+                                        <option value="Biology">Biology</option>
+                                        <option value="Engineering">Engineering</option>
+                                        <option value="Fiction">Fiction</option>
+                                        <option value="Non-Fiction">Non-Fiction</option>
+                                        <option value="History">History</option>
+                                        <option value="Biography">Biography</option>
+                                        <option value="Science">Science</option>
+                                        <option value="Other">Other</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="language" class="form-label">Language</label>
+                                    <select class="form-select" id="language" name="language">
+                                        <option value="English">English</option>
+                                        <option value="Spanish">Spanish</option>
+                                        <option value="French">French</option>
+                                        <option value="German">German</option>
+                                        <option value="Chinese">Chinese</option>
+                                        <option value="Japanese">Japanese</option>
+                                        <option value="Other">Other</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="edition" class="form-label">Edition</label>
+                                    <input type="text" class="form-control" id="edition" name="edition" placeholder="2nd">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label for="pages" class="form-label">Pages</label>
+                                    <input type="number" class="form-control" id="pages" name="pages" placeholder="500">
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label for="price" class="form-label">Price (₹)</label>
+                                    <input type="number" step="0.01" class="form-control" id="price" name="price" placeholder="45.99">
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label for="quantity" class="form-label">Quantity *</label>
+                                    <input type="number" class="form-control" id="quantity" name="quantity" required placeholder="5" min="1">
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label for="rack_number" class="form-label">Rack Number</label>
+                                    <input type="text" class="form-control" id="rack_number" name="rack_number" placeholder="A-101">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="form-group">
+                                    <label for="description" class="form-label">Description</label>
+                                    <textarea class="form-control" id="description" name="description" rows="4" placeholder="Enter book description..."></textarea>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>
+                                Add Book
+                            </button>
+                            <a href="{{ url_for('books_list') }}" class="btn btn-secondary">
+                                <i class="fas fa-times me-2"></i>
+                                Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.book-form .form-group {
+    margin-bottom: 20px;
+}
+
+.book-form .form-label {
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.book-form .form-control,
+.book-form .form-select {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+    border-radius: 8px;
+    padding: 10px 15px;
+    transition: all 0.3s ease;
+}
+
+.book-form .form-control:focus,
+.book-form .form-select:focus {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    color: white;
+}
+
+.book-form .form-control::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.book-form .form-select option {
+    background: #2c3e50;
+    color: white;
+}
+
+.form-actions {
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.card-header {
+    background: rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 20px;
+    margin: -20px -20px 20px -20px;
+    border-radius: 15px 15px 0 0;
+}
+
+.card-header h4 {
+    color: white;
+    margin: 0;
+}
+
+.alert {
+    border-radius: 10px;
+    border: none;
+    margin-bottom: 20px;
+}
+</style>
+{% endblock %}

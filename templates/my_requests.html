@@ -1,20 +1,21 @@
 {% extends "base.html" %}
 
-{% block title %}All Reservations - Library Management System{% endblock %}
-{% block page_title %}All Book Reservations{% endblock %}
+{% block title %}My Book Requests - Library Management System{% endblock %}
+{% block page_title %}My Book Requests{% endblock %}
 
 {% block content %}
 <div class="page-content">
     <div class="container-fluid">
+        <!-- Header Section -->
         <div class="row">
             <div class="col-12">
                 <div class="glass-card">
                     <div class="card-header">
                         <h4 class="mb-0">
-                            <i class="fas fa-bookmark me-2"></i>
-                            All Book Reservations
+                            <i class="fas fa-book me-2"></i>
+                            My Book Requests
                         </h4>
-                        <p class="text-white-50 mb-0">View and manage all book reservations in the library</p>
+                        <p class="text-white-50 mb-0">View and track your book requests</p>
                     </div>
                     
                     {% with messages = get_flashed_messages(with_categories=true) %}
@@ -31,124 +32,93 @@
                     
                     <!-- Statistics Cards -->
                     <div class="row mb-4">
-                        <div class="col-md-3">
+                        <div class="col-md-4">
                             <div class="stat-card">
                                 <div class="stat-icon bg-warning">
                                     <i class="fas fa-clock"></i>
                                 </div>
                                 <div class="stat-content">
-                                    <h3>{{ active_reservations|length }}</h3>
-                                    <p>Active</p>
+                                    <h3>{{ pending_requests|length }}</h3>
+                                    <p>Pending</p>
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-4">
                             <div class="stat-card">
                                 <div class="stat-icon bg-success">
                                     <i class="fas fa-check-circle"></i>
                                 </div>
                                 <div class="stat-content">
-                                    <h3>{{ fulfilled_reservations|length }}</h3>
-                                    <p>Fulfilled</p>
+                                    <h3>{{ approved_requests|length }}</h3>
+                                    <p>Approved</p>
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-4">
                             <div class="stat-card">
                                 <div class="stat-icon bg-danger">
                                     <i class="fas fa-times-circle"></i>
                                 </div>
                                 <div class="stat-content">
-                                    <h3>{{ cancelled_reservations|length }}</h3>
-                                    <p>Cancelled</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="stat-card">
-                                <div class="stat-icon bg-secondary">
-                                    <i class="fas fa-hourglass-end"></i>
-                                </div>
-                                <div class="stat-content">
-                                    <h3>{{ expired_reservations|length }}</h3>
-                                    <p>Expired</p>
+                                    <h3>{{ rejected_requests|length }}</h3>
+                                    <p>Rejected</p>
                                 </div>
                             </div>
                         </div>
                     </div>
                     
-                    <!-- Active Reservations -->
-                    {% if active_reservations %}
-                    <div class="reservations-section mb-4">
+                    <!-- Pending Requests -->
+                    {% if pending_requests %}
+                    <div class="requests-section mb-4">
                         <h5 class="section-title">
                             <i class="fas fa-clock"></i>
-                            Active Reservations
+                            Pending Requests
                         </h5>
                         <div class="table-responsive">
                             <table class="table table-dark table-hover">
                                 <thead>
                                     <tr>
                                         <th>Book</th>
-                                        <th>Student</th>
-                                        <th>Reservation Date</th>
-                                        <th>Expires On</th>
+                                        <th>Author</th>
+                                        <th>Category</th>
+                                        <th>Requested On</th>
                                         <th>Status</th>
-                                        <th>Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {% for reservation in active_reservations %}
+                                    {% for request in pending_requests %}
                                     <tr>
                                         <td>
                                             <div class="book-info">
                                                 <div class="book-title">
                                                     <i class="fas fa-book me-2"></i>
-                                                    {{ reservation.book.title }}
+                                                    {{ request.book_title }}
                                                 </div>
-                                                <div class="book-author text-white-50 small">
-                                                    by {{ reservation.book.author }}
+                                                {% if request.isbn %}
+                                                <div class="book-isbn text-white-50 small">
+                                                    ISBN: {{ request.isbn }}
                                                 </div>
+                                                {% endif %}
                                             </div>
                                         </td>
+                                        <td>{{ request.author or '-' }}</td>
                                         <td>
-                                            <div class="user-info">
-                                                <div class="user-name">
-                                                    <i class="fas fa-user me-2"></i>
-                                                    {{ reservation.user.name }}
-                                                </div>
-                                                <div class="user-email text-white-50 small">
-                                                    {{ reservation.user.email }}
-                                                </div>
-                                            </div>
+                                            {% if request.category %}
+                                            <span class="category-badge">{{ request.category }}</span>
+                                            {% else %}
+                                            -
+                                            {% endif %}
                                         </td>
                                         <td>
                                             <div class="date-info">
                                                 <i class="fas fa-calendar me-1"></i>
-                                                {{ reservation.reservation_date.strftime('%Y-%m-%d') }}
+                                                {{ request.created_at.strftime('%Y-%m-%d') }}
                                             </div>
                                         </td>
                                         <td>
-                                            <div class="date-info {% if reservation.is_expired() %}text-danger{% endif %}">
-                                                <i class="fas fa-calendar-alt me-1"></i>
-                                                {{ reservation.expiry_date.strftime('%Y-%m-%d') }}
-                                                {% if reservation.is_expired() %}
-                                                <span class="badge bg-danger ms-2">Expired</span>
-                                                {% endif %}
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <span class="status-badge status-{{ reservation.status }}">
-                                                {{ reservation.status.title() }}
+                                            <span class="status-badge status-{{ request.status }}">
+                                                {{ request.status.title() }}
                                             </span>
-                                        </td>
-                                        <td>
-                                            <div class="action-buttons">
-                                                <form method="POST" action="{{ url_for('fulfill_reservation', reservation_id=reservation.id) }}" style="display: inline;" onsubmit="return confirm('Are you sure you want to fulfill this reservation?');">
-                                                    <button type="submit" class="btn-action btn-fulfill" title="Fulfill Reservation">
-                                                        <i class="fas fa-check"></i>
-                                                    </button>
-                                                </form>
-                                            </div>
                                         </td>
                                     </tr>
                                     {% endfor %}
@@ -158,63 +128,43 @@
                     </div>
                     {% endif %}
                     
-                    <!-- Other Reservations -->
-                    {% if fulfilled_reservations or cancelled_reservations or expired_reservations %}
-                    <div class="reservations-section">
+                    <!-- Other Requests -->
+                    {% if other_requests %}
+                    <div class="requests-section">
                         <h5 class="section-title">
                             <i class="fas fa-history"></i>
-                            Reservation History
+                            Request History
                         </h5>
                         <div class="table-responsive">
                             <table class="table table-dark table-hover">
                                 <thead>
                                     <tr>
                                         <th>Book</th>
-                                        <th>Student</th>
-                                        <th>Reservation Date</th>
+                                        <th>Author</th>
                                         <th>Status</th>
-                                        <th>Notes</th>
+                                        <th>Admin Notes</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {% for reservation in (fulfilled_reservations + cancelled_reservations + expired_reservations) %}
+                                    {% for request in other_requests %}
                                     <tr>
                                         <td>
                                             <div class="book-info">
                                                 <div class="book-title">
                                                     <i class="fas fa-book me-2"></i>
-                                                    {{ reservation.book.title }}
-                                                </div>
-                                                <div class="book-author text-white-50 small">
-                                                    by {{ reservation.book.author }}
+                                                    {{ request.book_title }}
                                                 </div>
                                             </div>
                                         </td>
+                                        <td>{{ request.author or '-' }}</td>
                                         <td>
-                                            <div class="user-info">
-                                                <div class="user-name">
-                                                    <i class="fas fa-user me-2"></i>
-                                                    {{ reservation.user.name }}
-                                                </div>
-                                                <div class="user-email text-white-50 small">
-                                                    {{ reservation.user.email }}
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <div class="date-info">
-                                                <i class="fas fa-calendar me-1"></i>
-                                                {{ reservation.reservation_date.strftime('%Y-%m-%d') }}
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <span class="status-badge status-{{ reservation.status }}">
-                                                {{ reservation.status.title() }}
+                                            <span class="status-badge status-{{ request.status }}">
+                                                {{ request.status.title() }}
                                             </span>
                                         </td>
                                         <td>
                                             <div class="notes-info">
-                                                {{ reservation.notes or '-' }}
+                                                {{ request.admin_notes or '-' }}
                                             </div>
                                         </td>
                                     </tr>
@@ -225,14 +175,26 @@
                     </div>
                     {% endif %}
                     
-                    <!-- No Reservations -->
-                    {% if not reservations %}
-                    <div class="no-reservations">
-                        <i class="fas fa-bookmark"></i>
-                        <h4>No Reservations</h4>
-                        <p>There are no book reservations in the system yet.</p>
+                    <!-- No Requests -->
+                    {% if not requests %}
+                    <div class="no-requests">
+                        <i class="fas fa-book"></i>
+                        <h4>No Book Requests</h4>
+                        <p>You haven't requested any books yet. Request books that you'd like to see in our library!</p>
+                        <a href="{{ url_for('request_book') }}" class="btn btn-primary mt-3">
+                            <i class="fas fa-plus me-2"></i>
+                            Request a Book
+                        </a>
                     </div>
                     {% endif %}
+                    
+                    <!-- Request New Book Button -->
+                    <div class="text-center mt-4">
+                        <a href="{{ url_for('request_book') }}" class="btn btn-primary">
+                            <i class="fas fa-plus me-2"></i>
+                            Request a New Book
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -240,18 +202,18 @@
 </div>
 
 <style>
-.book-info, .user-info {
+.book-info {
     max-width: 250px;
 }
 
-.book-title, .user-name {
+.book-title {
     font-weight: 600;
     color: white;
     margin-bottom: 5px;
     font-size: 0.9rem;
 }
 
-.book-author, .user-email {
+.book-isbn {
     font-size: 0.8rem;
 }
 
@@ -270,23 +232,18 @@
     display: inline-block;
 }
 
-.status-badge.status-active {
+.status-badge.status-pending {
     background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
     color: white;
 }
 
-.status-badge.status-fulfilled {
+.status-badge.status-approved {
     background: linear-gradient(135deg, #10b981 0%, #059669 100%);
     color: white;
 }
 
-.status-badge.status-cancelled {
+.status-badge.status-rejected {
     background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-    color: white;
-}
-
-.status-badge.status-expired {
-    background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
     color: white;
 }
 
@@ -296,33 +253,13 @@
     max-width: 200px;
 }
 
-.action-buttons {
-    display: flex;
-    gap: 8px;
-}
-
-.btn-action {
-    width: 32px;
-    height: 32px;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    text-decoration: none;
-    border: none;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    font-size: 0.9rem;
-}
-
-.btn-action:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-}
-
-.btn-fulfill {
-    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+.category-badge {
+    background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
     color: white;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 500;
 }
 
 .stat-card {
@@ -365,7 +302,7 @@
     margin-bottom: 0;
 }
 
-.no-reservations {
+.no-requests {
     text-align: center;
     padding: 80px 20px;
     background: rgba(255, 255, 255, 0.08);
@@ -375,25 +312,26 @@
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
 }
 
-.no-reservations i {
+.no-requests i {
     font-size: 5rem;
     color: rgba(245, 158, 11, 0.5);
     margin-bottom: 20px;
     display: block;
 }
 
-.no-reservations h4 {
+.no-requests h4 {
     color: rgba(255, 255, 255, 0.8);
     margin-bottom: 10px;
     font-weight: 600;
 }
 
-.no-reservations p {
+.no-requests p {
     color: rgba(255, 255, 255, 0.6);
     font-size: 1rem;
+    margin-bottom: 20px;
 }
 
-.reservations-section {
+.requests-section {
     margin-bottom: 30px;
 }
 
@@ -463,17 +401,6 @@
     
     .stat-content h3 {
         font-size: 28px;
-    }
-    
-    .action-buttons {
-        flex-direction: column;
-        gap: 4px;
-    }
-    
-    .btn-action {
-        width: 28px;
-        height: 28px;
-        font-size: 0.8rem;
     }
 }
 </style>
