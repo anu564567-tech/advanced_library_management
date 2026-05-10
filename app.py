@@ -1824,4 +1824,4 @@ def url_has_no_scheme(url):
 
 if __name__ == '__main__':
     app = create_app('development')
-    socketio.run(app, debug=True, host='0.0.0.0', port=5000)
+    socketio.run(app, debug=True, host='0.0.0.0', port=5000, allow_unsafe_werkzeug=True)
