@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+
+{% block title %}Profile - Library Management System{% endblock %}
+
+{% block page_title %}User Profile{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">
+                        <i class="fas fa-user me-2"></i>User Profile
+                    </h4>
+                    <button class="btn btn-primary btn-sm" id="editProfileBtn">
+                        <i class="fas fa-edit me-1"></i>Edit Profile
+                    </button>
+                </div>
+                <div class="card-body">
+                    <!-- View Mode -->
+                    <div id="profileView">
+                        <div class="row">
+                            <div class="col-md-4 text-center">
+                                <div class="profile-avatar">
+                                    <div class="avatar-circle">
+                                        {{ user.name[0].upper() if user.name else 'U' }}
+                                    </div>
+                                </div>
+                                <h4 class="mt-3">{{ user.name }}</h4>
+                                <p class="text-muted">{{ user.role.value.title() }}</p>
+                                <span class="badge bg-success">Active</span>
+                            </div>
+                            <div class="col-md-8">
+                                <div class="profile-details">
+                                    <div class="detail-item">
+                                        <label><i class="fas fa-envelope me-2"></i>Email:</label>
+                                        <span>{{ user.email }}</span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <label><i class="fas fa-id-card me-2"></i>Roll Number:</label>
+                                        <span>{{ user.roll_number }}</span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <label><i class="fas fa-phone me-2"></i>Contact:</label>
+                                        <span>{{ user.contact or 'Not provided' }}</span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <label><i class="fas fa-map-marker-alt me-2"></i>Address:</label>
+                                        <span>{{ user.address or 'Not provided' }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Edit Mode -->
+                    <div id="profileEdit" style="display: none;">
+                        <form method="POST" action="{{ url_for('update_profile') }}">
+                            <div class="row">
+                                <div class="col-md-4 text-center">
+                                    <div class="profile-avatar">
+                                        <div class="avatar-circle">
+                                            {{ user.name[0].upper() if user.name else 'U' }}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-8">
+                                    <div class="form-group mb-3">
+                                        <label for="name" class="form-label"><i class="fas fa-user me-2"></i>Name:</label>
+                                        <input type="text" class="form-control" id="name" name="name" value="{{ user.name }}" required>
+                                    </div>
+                                    <div class="form-group mb-3">
+                                        <label for="email" class="form-label"><i class="fas fa-envelope me-2"></i>Email:</label>
+                                        <input type="email" class="form-control" id="email" name="email" value="{{ user.email }}" required>
+                                    </div>
+                                    <div class="form-group mb-3">
+                                        <label for="roll_number" class="form-label"><i class="fas fa-id-card me-2"></i>Roll Number:</label>
+                                        <input type="text" class="form-control" id="roll_number" name="roll_number" value="{{ user.roll_number }}" required>
+                                    </div>
+                                    <div class="form-group mb-3">
+                                        <label for="contact" class="form-label"><i class="fas fa-phone me-2"></i>Contact:</label>
+                                        <input type="text" class="form-control" id="contact" name="contact" value="{{ user.contact or '' }}">
+                                    </div>
+                                    <div class="form-group mb-3">
+                                        <label for="address" class="form-label"><i class="fas fa-map-marker-alt me-2"></i>Address:</label>
+                                        <textarea class="form-control" id="address" name="address" rows="3">{{ user.address or '' }}</textarea>
+                                    </div>
+                                    <div class="d-flex gap-2">
+                                        <button type="submit" class="btn btn-success">
+                                            <i class="fas fa-save me-1"></i>Save Changes
+                                        </button>
+                                        <button type="button" class="btn btn-secondary" id="cancelEditBtn">
+                                            <i class="fas fa-times me-1"></i>Cancel
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const editBtn = document.getElementById('editProfileBtn');
+    const cancelBtn = document.getElementById('cancelEditBtn');
+    const profileView = document.getElementById('profileView');
+    const profileEdit = document.getElementById('profileEdit');
+    
+    // Show edit mode
+    editBtn.addEventListener('click', function() {
+        profileView.style.display = 'none';
+        profileEdit.style.display = 'block';
+        editBtn.style.display = 'none';
+    });
+    
+    // Hide edit mode
+    cancelBtn.addEventListener('click', function() {
+        profileView.style.display = 'block';
+        profileEdit.style.display = 'none';
+        editBtn.style.display = 'block';
+    });
+});
+</script>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.profile-avatar {
+    padding: 20px;
+}
+
+.avatar-circle {
+    width: 150px;
+    height: 150px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 60px;
+    font-weight: bold;
+    margin: 0 auto;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.profile-details {
+    padding: 20px;
+}
+
+.detail-item {
+    display: flex;
+    padding: 15px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.detail-item:last-child {
+    border-bottom: none;
+}
+
+.detail-item label {
+    width: 150px;
+    font-weight: 600;
+    color: #555;
+}
+
+.detail-item span {
+    color: #333;
+}
+</style>
+{% endblock %}

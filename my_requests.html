@@ -1,0 +1,407 @@
+{% extends "base.html" %}
+
+{% block title %}My Book Requests - Library Management System{% endblock %}
+{% block page_title %}My Book Requests{% endblock %}
+
+{% block content %}
+<div class="page-content">
+    <div class="container-fluid">
+        <!-- Header Section -->
+        <div class="row">
+            <div class="col-12">
+                <div class="glass-card">
+                    <div class="card-header">
+                        <h4 class="mb-0">
+                            <i class="fas fa-book me-2"></i>
+                            My Book Requests
+                        </h4>
+                        <p class="text-white-50 mb-0">View and track your book requests</p>
+                    </div>
+                    
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                                    <i class="fas fa-{% if category == 'success' %}check-circle{% elif category == 'danger' or category == 'error' %}exclamation-circle{% elif category == 'warning' %}exclamation-triangle{% else %}info-circle{% endif %}"></i>
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+                    
+                    <!-- Statistics Cards -->
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <div class="stat-card">
+                                <div class="stat-icon bg-warning">
+                                    <i class="fas fa-clock"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <h3>{{ pending_requests|length }}</h3>
+                                    <p>Pending</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="stat-card">
+                                <div class="stat-icon bg-success">
+                                    <i class="fas fa-check-circle"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <h3>{{ approved_requests|length }}</h3>
+                                    <p>Approved</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="stat-card">
+                                <div class="stat-icon bg-danger">
+                                    <i class="fas fa-times-circle"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <h3>{{ rejected_requests|length }}</h3>
+                                    <p>Rejected</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Pending Requests -->
+                    {% if pending_requests %}
+                    <div class="requests-section mb-4">
+                        <h5 class="section-title">
+                            <i class="fas fa-clock"></i>
+                            Pending Requests
+                        </h5>
+                        <div class="table-responsive">
+                            <table class="table table-dark table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Book</th>
+                                        <th>Author</th>
+                                        <th>Category</th>
+                                        <th>Requested On</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for request in pending_requests %}
+                                    <tr>
+                                        <td>
+                                            <div class="book-info">
+                                                <div class="book-title">
+                                                    <i class="fas fa-book me-2"></i>
+                                                    {{ request.book_title }}
+                                                </div>
+                                                {% if request.isbn %}
+                                                <div class="book-isbn text-white-50 small">
+                                                    ISBN: {{ request.isbn }}
+                                                </div>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                        <td>{{ request.author or '-' }}</td>
+                                        <td>
+                                            {% if request.category %}
+                                            <span class="category-badge">{{ request.category }}</span>
+                                            {% else %}
+                                            -
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <div class="date-info">
+                                                <i class="fas fa-calendar me-1"></i>
+                                                {{ request.created_at.strftime('%Y-%m-%d') }}
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="status-badge status-{{ request.status }}">
+                                                {{ request.status.title() }}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Other Requests -->
+                    {% if other_requests %}
+                    <div class="requests-section">
+                        <h5 class="section-title">
+                            <i class="fas fa-history"></i>
+                            Request History
+                        </h5>
+                        <div class="table-responsive">
+                            <table class="table table-dark table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Book</th>
+                                        <th>Author</th>
+                                        <th>Status</th>
+                                        <th>Admin Notes</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for request in other_requests %}
+                                    <tr>
+                                        <td>
+                                            <div class="book-info">
+                                                <div class="book-title">
+                                                    <i class="fas fa-book me-2"></i>
+                                                    {{ request.book_title }}
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>{{ request.author or '-' }}</td>
+                                        <td>
+                                            <span class="status-badge status-{{ request.status }}">
+                                                {{ request.status.title() }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div class="notes-info">
+                                                {{ request.admin_notes or '-' }}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- No Requests -->
+                    {% if not requests %}
+                    <div class="no-requests">
+                        <i class="fas fa-book"></i>
+                        <h4>No Book Requests</h4>
+                        <p>You haven't requested any books yet. Request books that you'd like to see in our library!</p>
+                        <a href="{{ url_for('request_book') }}" class="btn btn-primary mt-3">
+                            <i class="fas fa-plus me-2"></i>
+                            Request a Book
+                        </a>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Request New Book Button -->
+                    <div class="text-center mt-4">
+                        <a href="{{ url_for('request_book') }}" class="btn btn-primary">
+                            <i class="fas fa-plus me-2"></i>
+                            Request a New Book
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.book-info {
+    max-width: 250px;
+}
+
+.book-title {
+    font-weight: 600;
+    color: white;
+    margin-bottom: 5px;
+    font-size: 0.9rem;
+}
+
+.book-isbn {
+    font-size: 0.8rem;
+}
+
+.date-info {
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.status-badge {
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.9);
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    display: inline-block;
+}
+
+.status-badge.status-pending {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: white;
+}
+
+.status-badge.status-approved {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+}
+
+.status-badge.status-rejected {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: white;
+}
+
+.notes-info {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.7);
+    max-width: 200px;
+}
+
+.category-badge {
+    background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+    color: white;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.stat-card {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 15px;
+    padding: 25px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+}
+
+.stat-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 24px;
+}
+
+.stat-content h3 {
+    color: white;
+    font-size: 32px;
+    font-weight: 700;
+    margin-bottom: 5px;
+}
+
+.stat-content p {
+    color: rgba(255, 255, 255, 0.7);
+    margin-bottom: 0;
+}
+
+.no-requests {
+    text-align: center;
+    padding: 80px 20px;
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}
+
+.no-requests i {
+    font-size: 5rem;
+    color: rgba(245, 158, 11, 0.5);
+    margin-bottom: 20px;
+    display: block;
+}
+
+.no-requests h4 {
+    color: rgba(255, 255, 255, 0.8);
+    margin-bottom: 10px;
+    font-weight: 600;
+}
+
+.no-requests p {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 1rem;
+    margin-bottom: 20px;
+}
+
+.requests-section {
+    margin-bottom: 30px;
+}
+
+.section-title {
+    color: white;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.section-title i {
+    color: #f59e0b;
+}
+
+.table {
+    color: white;
+}
+
+.table th {
+    border-color: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 600;
+}
+
+.table td {
+    border-color: rgba(255, 255, 255, 0.05);
+}
+
+.table-hover tbody tr:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.alert {
+    border-radius: 10px;
+    border: none;
+    margin-bottom: 20px;
+}
+
+.card-header {
+    background: rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 20px;
+    margin: -20px -20px 20px -20px;
+    border-radius: 15px 15px 0 0;
+}
+
+.card-header h4 {
+    color: white;
+    margin: 0;
+}
+
+@media (max-width: 768px) {
+    .stat-card {
+        flex-direction: column;
+        text-align: center;
+        padding: 20px;
+    }
+    
+    .stat-icon {
+        width: 50px;
+        height: 50px;
+        font-size: 20px;
+    }
+    
+    .stat-content h3 {
+        font-size: 28px;
+    }
+}
+</style>
+{% endblock %}

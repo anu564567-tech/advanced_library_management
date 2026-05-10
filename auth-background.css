@@ -1,0 +1,83 @@
+/* Authentication pages background styling */
+.auth-bg {
+    background-image: url('/static/images/books_background.jpg.jfif');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow-y: auto;
+    padding: 20px 0;
+}
+
+/* Overlay for better text readability */
+.auth-bg::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 1;
+}
+
+
+/* Ensure form containers are readable */
+.auth-container {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 15px;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+    z-index: 10;
+    position: relative;
+}
+
+/* Adjust text colors for better contrast */
+.auth-container .text-muted {
+    color: #6c757d !important;
+}
+
+.auth-container .form-control {
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: #212529;
+}
+
+.auth-container .form-control:focus {
+    background: rgba(255, 255, 255, 0.95);
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+.auth-container .btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+}
+
+.auth-container .btn-primary:hover {
+    background: linear-gradient(135deg, #5a6fd8 0%, #6c4299 100%);
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+.auth-container .btn-outline-primary {
+    color: #667eea;
+    border-color: #667eea;
+}
+
+.auth-container .btn-outline-primary:hover {
+    background: #667eea;
+    border-color: #667eea;
+}
+
+/* Adjust link colors */
+.auth-container a {
+    color: #667eea;
+}
+
+.auth-container a:hover {
+    color: #5a6fd8;
+}

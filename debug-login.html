@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Login</title>
+    <style>
+        body {
+            background: linear-gradient(135deg, #d0d0d3 0%,#c4bccd 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: Arial, sans-serif;
+            color: white;
+        }
+        .debug-box {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            padding: 40px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="debug-box">
+        <h2>🔍 Debug Login Page</h2>
+        <p>If you can see this, Flask templates are working.</p>
+        <a href="/login" style="color: white; text-decoration: none;">→ Go to Real Login Page</a>
+    </div>
+</body>
+</html>

@@ -1,0 +1,800 @@
+{% extends "base.html" %}
+
+{% block title %}All Book Requests - Library Management System{% endblock %}
+{% block page_title %}All Book Requests{% endblock %}
+
+{% block content %}
+<div class="page-content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <div class="glass-card">
+                    <div class="card-header">
+                        <h4 class="mb-0">
+                            <i class="fas fa-book me-2"></i>
+                            All Book Requests
+                        </h4>
+                        <p class="text-white-50 mb-0">View and manage all book requests from students</p>
+                    </div>
+                    
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                                    <i class="fas fa-{% if category == 'success' %}check-circle{% elif category == 'danger' or category == 'error' %}exclamation-circle{% elif category == 'warning' %}exclamation-triangle{% else %}info-circle{% endif %}"></i>
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+                    
+                    <!-- Statistics Cards -->
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <div class="stat-card" onclick="filterRequests('pending')" style="cursor: pointer;" data-filter="pending">
+                                <div class="stat-icon bg-warning">
+                                    <i class="fas fa-clock"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <h3>{{ pending_requests|length }}</h3>
+                                    <p>Pending</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="stat-card" onclick="filterRequests('approved')" style="cursor: pointer;" data-filter="approved">
+                                <div class="stat-icon bg-success">
+                                    <i class="fas fa-check-circle"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <h3>{{ approved_requests|length }}</h3>
+                                    <p>Approved</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="stat-card" onclick="filterRequests('rejected')" style="cursor: pointer;" data-filter="rejected">
+                                <div class="stat-icon bg-danger">
+                                    <i class="fas fa-times-circle"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <h3>{{ rejected_requests|length }}</h3>
+                                    <p>Rejected</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Filter Controls -->
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="filter-info">
+                                    <span id="filter-status" class="badge bg-info">Showing All Requests</span>
+                                </div>
+                                <button class="btn btn-sm btn-outline-light" onclick="filterRequests('all')">
+                                    <i class="fas fa-list me-1"></i> Show All
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Pending Requests -->
+                    {% if pending_requests %}
+                    <div class="requests-section mb-4">
+                        <h5 class="section-title">
+                            <i class="fas fa-clock"></i>
+                            Pending Requests
+                        </h5>
+                        <div class="table-responsive">
+                            <table class="table table-dark table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Book</th>
+                                        <th>Student</th>
+                                        <th>Category</th>
+                                        <th>Requested On</th>
+                                        <th>Reason</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for request in pending_requests %}
+                                    <tr>
+                                        <td>
+                                            <div class="book-info">
+                                                <div class="book-title">
+                                                    <i class="fas fa-book me-2"></i>
+                                                    {{ request.book_title }}
+                                                </div>
+                                                {% if request.author %}
+                                                <div class="book-author text-white-50 small">
+                                                    by {{ request.author }}
+                                                </div>
+                                                {% endif %}
+                                                {% if request.isbn %}
+                                                <div class="book-isbn text-white-50 small">
+                                                    ISBN: {{ request.isbn }}
+                                                </div>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="user-info">
+                                                <div class="user-name">
+                                                    <i class="fas fa-user me-2"></i>
+                                                    {{ request.user.name }}
+                                                </div>
+                                                <div class="user-email text-white-50 small">
+                                                    {{ request.user.email }}
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            {% if request.category %}
+                                            <span class="category-badge">{{ request.category }}</span>
+                                            {% else %}
+                                            -
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <div class="date-info">
+                                                <i class="fas fa-calendar me-1"></i>
+                                                {{ request.created_at.strftime('%Y-%m-%d') }}
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="notes-info">
+                                                {{ request.reason or '-' }}
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="action-buttons">
+                                                <button type="button" class="btn-action btn-approve" title="Approve" 
+                                                        data-request-id="{{ request.id }}" 
+                                                        data-book-title="{{ request.book_title }}" 
+                                                        data-user-name="{{ request.user.name }}"
+                                                        onclick="openApproveModal(this)">
+                                                    <i class="fas fa-check"></i>
+                                                </button>
+                                                <button type="button" class="btn-action btn-reject" title="Reject"
+                                                        data-request-id="{{ request.id }}" 
+                                                        data-book-title="{{ request.book_title }}" 
+                                                        data-user-name="{{ request.user.name }}"
+                                                        onclick="openRejectModal(this)">
+                                                    <i class="fas fa-times"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Other Requests -->
+                    {% if approved_requests or rejected_requests %}
+                    <div class="requests-section">
+                        <h5 class="section-title">
+                            <i class="fas fa-history"></i>
+                            Request History
+                        </h5>
+                        <div class="table-responsive">
+                            <table class="table table-dark table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Book</th>
+                                        <th>Student</th>
+                                        <th>Status</th>
+                                        <th>Admin Notes</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for request in (approved_requests + rejected_requests) %}
+                                    <tr>
+                                        <td>
+                                            <div class="book-info">
+                                                <div class="book-title">
+                                                    <i class="fas fa-book me-2"></i>
+                                                    {{ request.book_title }}
+                                                </div>
+                                                {% if request.author %}
+                                                <div class="book-author text-white-50 small">
+                                                    by {{ request.author }}
+                                                </div>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="user-info">
+                                                <div class="user-name">
+                                                    <i class="fas fa-user me-2"></i>
+                                                    {{ request.user.name }}
+                                                </div>
+                                                <div class="user-email text-white-50 small">
+                                                    {{ request.user.email }}
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="status-badge status-{{ request.status }}">
+                                                {{ request.status.title() }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div class="notes-info">
+                                                {{ request.admin_notes or '-' }}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- No Requests -->
+                    {% if not requests %}
+                    <div class="no-requests">
+                        <i class="fas fa-book"></i>
+                        <h4>No Book Requests</h4>
+                        <p>There are no book requests in the system yet.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.book-info, .user-info {
+    max-width: 250px;
+}
+
+.book-title, .user-name {
+    font-weight: 600;
+    color: white;
+    margin-bottom: 5px;
+    font-size: 0.9rem;
+}
+
+.book-author, .user-email, .book-isbn {
+    font-size: 0.8rem;
+}
+
+.date-info {
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.status-badge {
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.9);
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    display: inline-block;
+}
+
+.status-badge.status-pending {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: white;
+}
+
+.status-badge.status-approved {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+}
+
+.status-badge.status-rejected {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: white;
+}
+
+.category-badge {
+    background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+    color: white;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.notes-info {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.7);
+    max-width: 200px;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-action {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.9rem;
+}
+
+.btn-action:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.btn-approve {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+}
+
+.btn-reject {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: white;
+}
+
+.stat-card {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 15px;
+    padding: 25px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+}
+
+.stat-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 24px;
+}
+
+.stat-content h3 {
+    color: white;
+    font-size: 32px;
+    font-weight: 700;
+    margin-bottom: 5px;
+}
+
+.stat-content p {
+    color: rgba(255, 255, 255, 0.7);
+    margin-bottom: 0;
+}
+
+.no-requests {
+    text-align: center;
+    padding: 80px 20px;
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}
+
+.no-requests i {
+    font-size: 5rem;
+    color: rgba(245, 158, 11, 0.5);
+    margin-bottom: 20px;
+    display: block;
+}
+
+.no-requests h4 {
+    color: rgba(255, 255, 255, 0.8);
+    margin-bottom: 10px;
+    font-weight: 600;
+}
+
+.no-requests p {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 1rem;
+}
+
+.requests-section {
+    margin-bottom: 30px;
+}
+
+.section-title {
+    color: white;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.section-title i {
+    color: #f59e0b;
+}
+
+.table {
+    color: white;
+}
+
+.table th {
+    border-color: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 600;
+}
+
+.table td {
+    border-color: rgba(255, 255, 255, 0.05);
+}
+
+.table-hover tbody tr:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.alert {
+    border-radius: 10px;
+    border: none;
+    margin-bottom: 20px;
+}
+
+.card-header {
+    background: rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 20px;
+    margin: -20px -20px 20px -20px;
+    border-radius: 15px 15px 0 0;
+}
+
+.card-header h4 {
+    color: white;
+    margin: 0;
+}
+
+@media (max-width: 768px) {
+    .stat-card {
+        flex-direction: column;
+        text-align: center;
+        padding: 20px;
+    }
+    
+    .stat-icon {
+        width: 50px;
+        height: 50px;
+        font-size: 20px;
+    }
+    
+    .stat-content h3 {
+        font-size: 28px;
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+        gap: 4px;
+    }
+    
+    .btn-action {
+        width: 28px;
+        height: 28px;
+        font-size: 0.8rem;
+    }
+}
+</style>
+
+<!-- Approve Modal -->
+<div class="modal fade" id="approveModal" tabindex="-1" aria-labelledby="approveModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-dark text-white">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title" id="approveModalLabel">
+                    <i class="fas fa-check-circle text-success me-2"></i>
+                    Approve Book Request
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <p class="text-info">You are about to approve the following book request:</p>
+                    <div class="bg-secondary rounded p-3">
+                        <div class="mb-2">
+                            <strong>Book:</strong> <span id="approveBookTitle"></span>
+                        </div>
+                        <div class="mb-2">
+                            <strong>Student:</strong> <span id="approveStudentName"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label for="approveNotes" class="form-label">Admin Notes (Optional)</label>
+                    <textarea class="form-control bg-secondary text-white border-secondary" id="approveNotes" rows="3" 
+                              placeholder="Add any notes about this approval (e.g., collection details, conditions, etc.)"></textarea>
+                    <small class="text-muted">These notes will be visible to the student in their request history.</small>
+                </div>
+            </div>
+            <div class="modal-footer border-secondary">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" onclick="submitApproval()">
+                    <i class="fas fa-check me-2"></i>Approve Request
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Reject Modal -->
+<div class="modal fade" id="rejectModal" tabindex="-1" aria-labelledby="rejectModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-dark text-white">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title" id="rejectModalLabel">
+                    <i class="fas fa-times-circle text-danger me-2"></i>
+                    Reject Book Request
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <p class="text-warning">You are about to reject the following book request:</p>
+                    <div class="bg-secondary rounded p-3">
+                        <div class="mb-2">
+                            <strong>Book:</strong> <span id="rejectBookTitle"></span>
+                        </div>
+                        <div class="mb-2">
+                            <strong>Student:</strong> <span id="rejectStudentName"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label for="rejectNotes" class="form-label">Reason for Rejection *</label>
+                    <textarea class="form-control bg-secondary text-white border-secondary" id="rejectNotes" rows="3" 
+                              placeholder="Please explain why this request is being rejected..." required></textarea>
+                    <small class="text-muted">This reason will be visible to the student in their request history.</small>
+                </div>
+            </div>
+            <div class="modal-footer border-secondary">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" onclick="submitRejection()">
+                    <i class="fas fa-times me-2"></i>Reject Request
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function filterRequests(filterType) {
+    console.log('Filtering requests by:', filterType);
+    
+    // Update filter status badge
+    const filterStatus = document.getElementById('filter-status');
+    const allSections = document.querySelectorAll('.requests-section');
+    const allStatCards = document.querySelectorAll('.stat-card[data-filter]');
+    
+    // Remove active state from all stat cards
+    allStatCards.forEach(card => {
+        card.style.border = '';
+        card.style.transform = '';
+    });
+    
+    // Update filter status text
+    switch(filterType) {
+        case 'pending':
+            filterStatus.textContent = 'Showing Pending Requests';
+            filterStatus.className = 'badge bg-warning';
+            break;
+        case 'approved':
+            filterStatus.textContent = 'Showing Approved Requests';
+            filterStatus.className = 'badge bg-success';
+            break;
+        case 'rejected':
+            filterStatus.textContent = 'Showing Rejected Requests';
+            filterStatus.className = 'badge bg-danger';
+            break;
+        case 'all':
+            filterStatus.textContent = 'Showing All Requests';
+            filterStatus.className = 'badge bg-info';
+            break;
+    }
+    
+    // Highlight active filter card
+    if (filterType !== 'all') {
+        const activeCard = document.querySelector(`.stat-card[data-filter="${filterType}"]`);
+        if (activeCard) {
+            activeCard.style.border = '2px solid #667eea';
+            activeCard.style.transform = 'scale(1.02)';
+        }
+    }
+    
+    // Filter sections
+    allSections.forEach(section => {
+        const sectionTitle = section.querySelector('.section-title').textContent.toLowerCase();
+        
+        switch(filterType) {
+            case 'pending':
+                if (sectionTitle.includes('pending')) {
+                    section.style.display = 'block';
+                } else {
+                    section.style.display = 'none';
+                }
+                break;
+            case 'approved':
+                if (sectionTitle.includes('history')) {
+                    section.style.display = 'block';
+                    // Filter table rows to show only approved
+                    const table = section.querySelector('table');
+                    if (table) {
+                        const rows = table.querySelectorAll('tbody tr');
+                        rows.forEach(row => {
+                            const statusCell = row.querySelector('td:nth-child(3)');
+                            if (statusCell) {
+                                const status = statusCell.textContent.toLowerCase();
+                                if (status.includes('approved')) {
+                                    row.style.display = '';
+                                } else {
+                                    row.style.display = 'none';
+                                }
+                            }
+                        });
+                    }
+                } else {
+                    section.style.display = 'none';
+                }
+                break;
+            case 'rejected':
+                if (sectionTitle.includes('history')) {
+                    section.style.display = 'block';
+                    // Filter table rows to show only rejected
+                    const table = section.querySelector('table');
+                    if (table) {
+                        const rows = table.querySelectorAll('tbody tr');
+                        rows.forEach(row => {
+                            const statusCell = row.querySelector('td:nth-child(3)');
+                            if (statusCell) {
+                                const status = statusCell.textContent.toLowerCase();
+                                if (status.includes('rejected')) {
+                                    row.style.display = '';
+                                } else {
+                                    row.style.display = 'none';
+                                }
+                            }
+                        });
+                    }
+                } else {
+                    section.style.display = 'none';
+                }
+                break;
+            case 'all':
+                // Show all sections and reset table filters
+                section.style.display = 'block';
+                const table = section.querySelector('table');
+                if (table) {
+                    const rows = table.querySelectorAll('tbody tr');
+                    rows.forEach(row => {
+                        row.style.display = '';
+                    });
+                }
+                break;
+        }
+    });
+    
+    // Scroll to the first visible section
+    const firstVisibleSection = Array.from(allSections).find(section => section.style.display !== 'none');
+    if (firstVisibleSection) {
+        firstVisibleSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+}
+
+// Modal functionality
+let currentRequestId = null;
+
+function openApproveModal(button) {
+    const requestId = button.getAttribute('data-request-id');
+    const bookTitle = button.getAttribute('data-book-title');
+    const userName = button.getAttribute('data-user-name');
+    
+    currentRequestId = requestId;
+    
+    // Set modal content
+    document.getElementById('approveBookTitle').textContent = bookTitle;
+    document.getElementById('approveStudentName').textContent = userName;
+    document.getElementById('approveNotes').value = '';
+    
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('approveModal'));
+    modal.show();
+}
+
+function openRejectModal(button) {
+    const requestId = button.getAttribute('data-request-id');
+    const bookTitle = button.getAttribute('data-book-title');
+    const userName = button.getAttribute('data-user-name');
+    
+    currentRequestId = requestId;
+    
+    // Set modal content
+    document.getElementById('rejectBookTitle').textContent = bookTitle;
+    document.getElementById('rejectStudentName').textContent = userName;
+    document.getElementById('rejectNotes').value = '';
+    
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('rejectModal'));
+    modal.show();
+}
+
+function submitApproval() {
+    const notes = document.getElementById('approveNotes').value;
+    
+    // Create form to submit approval with notes
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = `/admin/approve-request/${currentRequestId}`;
+    
+    // Add admin notes field
+    const notesField = document.createElement('input');
+    notesField.type = 'hidden';
+    notesField.name = 'admin_notes';
+    notesField.value = notes;
+    form.appendChild(notesField);
+    
+    // Submit form
+    document.body.appendChild(form);
+    form.submit();
+    
+    // Clean up
+    document.body.removeChild(form);
+}
+
+function submitRejection() {
+    const notes = document.getElementById('rejectNotes').value;
+    
+    if (!notes.trim()) {
+        alert('Please provide a reason for rejection.');
+        return;
+    }
+    
+    // Create form to submit rejection with notes
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = `/admin/reject-request/${currentRequestId}`;
+    
+    // Add admin notes field
+    const notesField = document.createElement('input');
+    notesField.type = 'hidden';
+    notesField.name = 'admin_notes';
+    notesField.value = notes;
+    form.appendChild(notesField);
+    
+    // Submit form
+    document.body.appendChild(form);
+    form.submit();
+    
+    // Clean up
+    document.body.removeChild(form);
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Admin requests page loaded');
+    // Set initial filter state to 'all'
+    filterRequests('all');
+});
+</script>
+{% endblock %}

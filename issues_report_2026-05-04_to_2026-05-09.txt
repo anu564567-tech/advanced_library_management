@@ -1,0 +1,33 @@
+BOOK ISSUES REPORT (2026-05-04 to 2026-05-09)
+==================================================
+
+1. Book: Effective Python
+   User: harshitha.S
+   Issue Date: 2026-05-05
+   Due Date: 2026-05-19
+   Status: Returned
+------------------------------
+2. Book: Python Crash Course
+   User: harshitha.S
+   Issue Date: 2026-05-05
+   Due Date: 2026-05-19
+   Status: Returned
+------------------------------
+3. Book: Flask Web Development
+   User: John Doe
+   Issue Date: 2026-05-06
+   Due Date: 2026-05-20
+   Status: Returned
+------------------------------
+4. Book: Introduction to Algorithms
+   User: harshitha.S
+   Issue Date: 2026-05-06
+   Due Date: 2026-05-20
+   Status: Issued
+------------------------------
+5. Book: Clean Code
+   User: harshitha.S
+   Issue Date: 2026-05-07
+   Due Date: 2026-05-21
+   Status: Returned
+------------------------------
