@@ -26,7 +26,7 @@ def create_app(config_name='development'):
     Application Factory Function
     Creates and configures Flask application
     """
-    app = Flask(__name__, static_folder='static')
+    app = Flask(__name__, template_folder='templates', static_folder='static')
     
     # Load configuration
     config_name = os.environ.get('FLASK_CONFIG', 'development')
@@ -632,7 +632,7 @@ def create_app(config_name='development'):
             book.author = request.form.get('author', '').strip()
             book.publication = request.form.get('publication', '').strip()
             book.category = request.form.get('category', '').strip()
-            book.quantity = request.form.get('quantity', 1, type=int)
+            book.total_quantity = request.form.get('quantity', 1, type=int)
             book.description = request.form.get('description', '').strip()
             book.edition = request.form.get('edition', '').strip()
             book.language = request.form.get('language', 'English').strip()
