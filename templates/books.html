@@ -606,9 +606,11 @@
                                         <i class="fas fa-eye"></i>
                                     </a>
                                     {% if current_user.role.value == 'student' %}
-                                    <a href="{{ url_for('request_book', book_id=book.id) }}" class="btn-action btn-request" title="Request Book" onclick="return confirm('Are you sure you want to request this book?');">
-                                        <i class="fas fa-plus"></i>
-                                    </a>
+                                    <form method="POST" action="{{ url_for('request_existing_book', book_id=book.id) }}" style="display: inline;" onsubmit="return confirm('Are you sure you want to request this book?');">
+                                        <button type="submit" class="btn-action btn-request" title="Request Book">
+                                            <i class="fas fa-plus"></i>
+                                        </button>
+                                    </form>
                                     <a href="{{ url_for('reserve_book', book_id=book.id) }}" class="btn-action btn-reserve" title="Reserve Book" onclick="return confirm('Are you sure you want to reserve this book?');">
                                         <i class="fas fa-bookmark"></i>
                                     </a>
