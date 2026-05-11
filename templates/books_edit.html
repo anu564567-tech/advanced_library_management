@@ -103,7 +103,7 @@
                     <h2 class="mb-0">
                         <i class="fas fa-edit me-2"></i>Edit Book
                     </h2>
-                    <a href="{{ url_for('books') }}" class="btn btn-secondary">
+                    <a href="{{ url_for('books_list') }}" class="btn btn-secondary">
                         <i class="fas fa-arrow-left me-2"></i>Back to Books
                     </a>
                 </div>
@@ -156,11 +156,11 @@
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="quantity" class="form-label">Total Quantity *</label>
-                                <input type="number" class="form-control" id="quantity" name="quantity" value="{{ book.total_quantity }}" min="1" required>
+                                <input type="number" class="form-control" id="quantity" name="quantity" value="{{ book.quantity }}" min="1" required>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label for="available" class="form-label">Available Quantity *</label>
-                                <input type="number" class="form-control" id="available" name="available" value="{{ book.available_quantity }}" min="0" required>
+                                <input type="number" class="form-control" id="available" name="available" value="{{ book.available }}" min="0" required>
                             </div>
                         </div>
 
@@ -176,7 +176,7 @@
                         </div>
 
                         <div class="d-flex justify-content-end gap-2">
-                            <a href="{{ url_for('books') }}" class="btn btn-secondary">
+                            <a href="{{ url_for('books_list') }}" class="btn btn-secondary">
                                 <i class="fas fa-times me-2"></i>Cancel
                             </a>
                             <button type="submit" class="btn btn-primary">

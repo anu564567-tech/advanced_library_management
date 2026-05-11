@@ -431,16 +431,18 @@
     background: rgba(255, 255, 255, 0.08);
     backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 15px;
+    border-radius: 20px;
     padding: 25px;
     text-decoration: none;
-    color: white;
+    color: #ffffff;
     display: flex;
     align-items: center;
     gap: 20px;
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    transition: all 0.3s ease;
     position: relative;
     overflow: hidden;
+    pointer-events: auto;
+    z-index: 2;
 }
 
 .action-btn::before {
@@ -452,6 +454,8 @@
     height: 100%;
     background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
     transition: left 0.5s;
+    pointer-events: none;
+    z-index: 1;
 }
 
 .action-btn:hover::before {

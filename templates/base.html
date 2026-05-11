@@ -530,7 +530,10 @@
                 <li class="nav-item">
                     <a href="{{ url_for('notifications') }}" class="nav-link {% if request.endpoint == 'notifications' %}active{% endif %}">
                         <i class="fas fa-bell"></i>
-                        <span>Notifications</span>\n                        {% if unread_count > 0 %}\n                        <span class=" notification-badge\>{{ unread_count }}</span>\n {% endif %}
+                        <span>Notifications</span>
+                        {% if unread_count > 0 %}
+                        <span class="notification-badge">{{ unread_count }}</span>
+                        {% endif %}
                     </a>
                 </li>
                 <li class="nav-item">
