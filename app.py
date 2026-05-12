@@ -1262,10 +1262,7 @@ def create_app(config_name='development'):
         """Request an existing book from the library"""
         book = Book.query.get_or_404(book_id)
         
-        # Check if book is available for issue
-        if book.available > 0:
-            flash('This book is currently available for issue. No need to request.', 'info')
-            return redirect(url_for('books_list'))
+        # Allow requests for all books (available and unavailable) to go to admin for approval
         
         # Check if user already has an active reservation for this book
         existing_reservation = BookReservation.query.filter_by(
@@ -1306,7 +1303,7 @@ def create_app(config_name='development'):
             book_title=book.title,
             author=book.author,
             isbn=book.isbn,
-            reason='Student requested available book from library catalog',
+            reason='Student requested book from library catalog',
             status='pending'
         )
         
