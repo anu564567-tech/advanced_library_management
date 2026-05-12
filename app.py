@@ -1255,6 +1255,67 @@ def create_app(config_name='development'):
         
         return render_template('request_book.html')
     
+    @app.route('/request-book/<int:book_id>', methods=['POST'])
+    @login_required
+    @student_required
+    def request_existing_book(book_id):
+        """Request an existing book from the library"""
+        book = Book.query.get_or_404(book_id)
+        
+        # Check if book is available for issue
+        if book.available > 0:
+            flash('This book is currently available for issue. No need to request.', 'info')
+            return redirect(url_for('books_list'))
+        
+        # Check if user already has an active reservation for this book
+        existing_reservation = BookReservation.query.filter_by(
+            user_id=current_user.id,
+            book_id=book_id,
+            status='active'
+        ).first()
+        
+        if existing_reservation:
+            flash('You already have an active reservation for this book.', 'warning')
+            return redirect(url_for('books_list'))
+        
+        # Check if user already has this book issued
+        issued_book = IssuedBook.query.filter_by(
+            user_id=current_user.id,
+            book_id=book_id,
+            is_returned=False
+        ).first()
+        
+        if issued_book:
+            flash('You already have this book issued.', 'warning')
+            return redirect(url_for('books_list'))
+        
+        # Check if user already requested this book
+        existing_request = BookRequest.query.filter_by(
+            user_id=current_user.id,
+            book_title=book.title,
+            status='pending'
+        ).first()
+        
+        if existing_request:
+            flash('You already have a pending request for this book.', 'warning')
+            return redirect(url_for('books_list'))
+        
+        # Create book request
+        book_request = BookRequest(
+            user_id=current_user.id,
+            book_title=book.title,
+            author=book.author,
+            isbn=book.isbn,
+            reason='Student requested available book from library catalog',
+            status='pending'
+        )
+        
+        db.session.add(book_request)
+        db.session.commit()
+        
+        flash(f'Book request for "{book.title}" has been submitted successfully!', 'success')
+        return redirect(url_for('books_list'))
+    
     @app.route('/my-requests')
     @login_required
     @student_required
