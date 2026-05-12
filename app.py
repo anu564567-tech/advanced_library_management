@@ -1400,10 +1400,59 @@ def create_app(config_name='development'):
             return redirect(url_for('admin_requests'))
         
         notes = request.form.get('admin_notes', '')
-        book_request.approve_request(notes=notes)
+        
+        # Check if book exists and is available
+        book = None
+        if book_request.isbn:
+            book = Book.query.filter_by(isbn=book_request.isbn).first()
+        if not book:
+            book = Book.query.filter(db.or_(
+                Book.title.ilike(book_request.book_title),
+                Book.title.ilike(f'%{book_request.book_title}%')
+            )).first()
+        
+        if not book:
+            flash(f'Book "{book_request.book_title}" not found in library. Please add the book first.', 'warning')
+            book_request.status = 'approved'  # Mark as approved but not issued
+            if notes:
+                book_request.admin_notes = notes
+            book_request.admin_notes += '\n\nNote: Book not found in library. Please add book before issuing.'
+            db.session.commit()
+            return redirect(url_for('admin_requests'))
+        
+        if book.available <= 0:
+            flash(f'Book "{book.title}" is not available for issue. All copies are currently issued.', 'warning')
+            book_request.status = 'approved'  # Mark as approved but not issued
+            if notes:
+                book_request.admin_notes = notes
+            book_request.admin_notes += '\n\nNote: Book not available for issue. No copies available.'
+            db.session.commit()
+            return redirect(url_for('admin_requests'))
+        
+        # Create issued book entry
+        issued_book = IssuedBook(
+            user_id=book_request.user_id,
+            book_id=book.id,
+            issue_date=datetime.utcnow(),
+            due_date=datetime.utcnow() + timedelta(days=14),  # Default 14 days
+            notes=f'Auto-issued from approved book request: {book_request.reason}'
+        )
+        
+        # Update book availability
+        book.available -= 1
+        book.total_issued += 1
+        
+        # Update request status
+        book_request.status = 'approved'
+        if notes:
+            book_request.admin_notes = notes
+        book_request.admin_notes += f'\n\nAuto-issued to {book_request.user.name} on {datetime.utcnow().strftime("%Y-%m-%d")}'
+        
+        db.session.add(issued_book)
+        db.session.add(book)
         db.session.commit()
         
-        flash(f'Book request for "{book_request.book_title}" has been approved.', 'success')
+        flash(f'Book request for "{book_request.book_title}" approved and issued to {book_request.user.name}!', 'success')
         return redirect(url_for('admin_requests'))
     
     @app.route('/admin/reject-request/<int:request_id>', methods=['POST'])
