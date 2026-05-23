@@ -225,11 +225,41 @@ class BookRequest(db.Model):
     user = db.relationship('User', backref=db.backref('book_requests', lazy='dynamic', cascade='all, delete-orphan'))
     
     def approve_request(self, notes=None):
-        """Approve book request"""
+        """Approve book request and issue book to user"""
+        from app import db, Book, IssuedBook
+        
         self.status = 'approved'
         if notes:
             self.admin_notes = notes
         self.updated_at = datetime.utcnow()
+        
+        # Try to find the book in library by title or ISBN
+        book = None
+        if self.isbn:
+            book = Book.query.filter_by(isbn=self.isbn).first()
+        if not book:
+            book = Book.query.filter(db.or_(
+                Book.title.ilike(self.book_title),
+                Book.title.ilike(f'%{self.book_title}%')
+            )).first()
+        
+        # If book exists, issue it to the user
+        if book and book.available > 0:
+            # Create issued book entry
+            issued_book = IssuedBook(
+                user_id=self.user_id,
+                book_id=book.id,
+                issue_date=datetime.utcnow(),
+                due_date=datetime.utcnow() + timedelta(days=14),  # Default 14 days
+                notes=f'Auto-issued from approved book request: {self.reason}'
+            )
+            
+            # Update book availability
+            book.available -= 1
+            book.total_issued += 1
+            
+            db.session.add(issued_book)
+            db.session.add(book)
     
     def reject_request(self, notes=None):
         """Reject book request"""
