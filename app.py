@@ -360,7 +360,11 @@ def create_app(config_name='development'):
         ).count()
         
         # Get recently issued books for activity feed
-        recent_issues = IssuedBook.query.order_by(desc(IssuedBook.issue_date)).limit(8).all()
+        # Filter by user role: students see only their activities, admins see all
+        if current_user.role == UserRole.STUDENT:
+            recent_issues = IssuedBook.query.filter_by(user_id=current_user.id).order_by(desc(IssuedBook.issue_date)).limit(8).all()
+        else:
+            recent_issues = IssuedBook.query.order_by(desc(IssuedBook.issue_date)).limit(8).all()
         
         # Calculate total issues (all issued books)
         total_issues = IssuedBook.query.count()
@@ -376,7 +380,7 @@ def create_app(config_name='development'):
                 if issue.is_returned and issue.fine and issue.fine.amount > 0:
                     description += f' (Fine: Rs. {issue.fine.amount})'
                 
-                # Include recent activities for all users (not just admin)
+                # Include recent activities
                 recent_activities.append({
                     'type': activity_type,
                     'description': description,
