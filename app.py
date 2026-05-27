@@ -1334,6 +1334,17 @@ def create_app(config_name='development'):
         )
         
         db.session.add(book_request)
+        
+        # Create notification for all admins
+        admin_users = User.query.filter_by(role=UserRole.ADMIN).all()
+        for admin in admin_users:
+            notification = Notification(
+                user_id=admin.id,
+                title='New Book Request',
+                message=f'{current_user.name} has requested an existing book: "{book.title}" by {book.author}. Please review and approve/reject.'
+            )
+            db.session.add(notification)
+        
         db.session.commit()
         
         flash(f'Book request for "{book.title}" has been submitted successfully!', 'success')
@@ -1474,6 +1485,15 @@ def create_app(config_name='development'):
         else:
             book_request.admin_notes = f'Auto-issued to {book_request.user.name} on {datetime.utcnow().strftime("%Y-%m-%d")}'
         
+        # Create notification for user
+        notification = Notification(
+            user_id=book_request.user_id,
+            title='Book Request Approved',
+            message=f'Your book request for "{book_request.book_title}" has been approved and issued to you!',
+            type='success'
+        )
+        db.session.add(notification)
+        
         db.session.add(issued_book)
         db.session.add(book)
         db.session.commit()
@@ -1494,6 +1514,16 @@ def create_app(config_name='development'):
         
         notes = request.form.get('admin_notes', '')
         book_request.reject_request(notes=notes)
+        
+        # Create notification for user
+        notification = Notification(
+            user_id=book_request.user_id,
+            title='Book Request Rejected',
+            message=f'Your book request for "{book_request.book_title}" has been rejected.',
+            type='error'
+        )
+        db.session.add(notification)
+        
         db.session.commit()
         
         flash(f'Book request for "{book_request.book_title}" has been rejected.', 'success')

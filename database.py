@@ -72,7 +72,6 @@ class Book(db.Model):
     edition = db.Column(db.String(20))
     pages = db.Column(db.Integer)
     price = db.Column(db.Float)
-    rack_number = db.Column(db.String(20))
     description = db.Column(db.Text)
     quantity = db.Column(db.Integer, default=1, nullable=False)
     available = db.Column(db.Integer, default=1, nullable=False)
