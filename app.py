@@ -1470,8 +1470,9 @@ def create_app(config_name='development'):
         # Update request status
         book_request.status = 'approved'
         if notes:
-            book_request.admin_notes = notes
-        book_request.admin_notes += f'\n\nAuto-issued to {book_request.user.name} on {datetime.utcnow().strftime("%Y-%m-%d")}'
+            book_request.admin_notes = notes + f'\n\nAuto-issued to {book_request.user.name} on {datetime.utcnow().strftime("%Y-%m-%d")}'
+        else:
+            book_request.admin_notes = f'Auto-issued to {book_request.user.name} on {datetime.utcnow().strftime("%Y-%m-%d")}'
         
         db.session.add(issued_book)
         db.session.add(book)
