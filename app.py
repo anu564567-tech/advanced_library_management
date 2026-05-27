@@ -441,12 +441,37 @@ def create_app(config_name='development'):
                 user_id=current_user.id,
                 status='active'
             ).count()
+            
+            # Get or create reading streak for user
+            from database import ReadingStreak
+            reading_streak = ReadingStreak.query.filter_by(user_id=current_user.id).first()
+            if not reading_streak:
+                reading_streak = ReadingStreak(user_id=current_user.id)
+                db.session.add(reading_streak)
+                db.session.commit()
+            
+            # Check if user has issued books today to update streak
+            today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+            today_issues = IssuedBook.query.filter(
+                and_(
+                    IssuedBook.user_id == current_user.id,
+                    IssuedBook.issue_date >= today_start
+                )
+            ).count()
+            
+            # Update streak if user has reading activity today
+            if today_issues > 0:
+                reading_streak.update_streak()
+                db.session.commit()
+            
+            reading_streak_count = reading_streak.check_streak_status()
         else:
             # For admin, set default values
             my_issued_books = 0
             my_fines = 0
             overdue_books = 0
             my_reservations = 0
+            reading_streak_count = 0
         
         return render_template('dashboard.html',
                              total_books=total_books,
@@ -457,6 +482,7 @@ def create_app(config_name='development'):
                              my_issued_books=my_issued_books,
                              my_fines=my_fines,
                              my_reservations=my_reservations,
+                             reading_streak_count=reading_streak_count,
                              recent_activities=recent_activities,
                              user_role=current_user.role.value)
     

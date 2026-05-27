@@ -297,16 +297,73 @@ class BookRenewal(db.Model):
             self.updated_at = datetime.utcnow()
             return True
         return False
+
+
+class ReadingStreak(db.Model):
+    """Reading streak model for tracking consecutive reading days"""
+    __tablename__ = 'reading_streaks'
     
-    def reject_renewal(self, notes=None):
-        """Reject renewal request"""
-        self.status = 'rejected'
-        if notes:
-            self.admin_notes = notes
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    current_streak = db.Column(db.Integer, default=0)
+    longest_streak = db.Column(db.Integer, default=0)
+    last_reading_date = db.Column(db.DateTime, nullable=True)
+    total_reading_days = db.Column(db.Integer, default=0)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relationships
+    user = db.relationship('User', backref=db.backref('reading_streak', uselist=False, cascade='all, delete-orphan'))
+    
+    def update_streak(self):
+        """Update reading streak based on last reading date"""
+        today = datetime.utcnow().date()
+        
+        if self.last_reading_date:
+            last_date = self.last_reading_date.date()
+            days_diff = (today - last_date).days
+            
+            if days_diff == 1:
+                # Consecutive day, increment streak
+                self.current_streak += 1
+                self.total_reading_days += 1
+            elif days_diff == 0:
+                # Same day, no change
+                pass
+            else:
+                # Streak broken, reset to 1 for today
+                self.current_streak = 1
+                self.total_reading_days += 1
+        else:
+            # First reading activity
+            self.current_streak = 1
+            self.total_reading_days = 1
+        
+        # Update longest streak if needed
+        if self.current_streak > self.longest_streak:
+            self.longest_streak = self.current_streak
+        
+        self.last_reading_date = datetime.utcnow()
         self.updated_at = datetime.utcnow()
     
+    def check_streak_status(self):
+        """Check if streak is still active (within 1 day)"""
+        if not self.last_reading_date:
+            return 0
+        
+        today = datetime.utcnow().date()
+        last_date = self.last_reading_date.date()
+        days_diff = (today - last_date).days
+        
+        if days_diff == 0:
+            return self.current_streak  # Active today
+        elif days_diff == 1:
+            return self.current_streak  # Still active from yesterday
+        else:
+            return 0  # Streak broken
+    
     def __repr__(self):
-        return f'<BookRenewal {self.issued_book.book.title} by {self.user.name} ({self.status})>'
+        return f'<ReadingStreak {self.user.name}: {self.current_streak} days>'
 
 
 class Notification(db.Model):
