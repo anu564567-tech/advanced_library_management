@@ -522,6 +522,46 @@
     font-size: 1rem;
 }
 
+/* Reading Streak Modal */
+.streak-display {
+    padding: 20px;
+}
+
+.streak-count {
+    font-size: 3rem;
+    font-weight: 700;
+    color: #f59e0b;
+    margin: 10px 0;
+}
+
+.streak-label {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 1.1rem;
+}
+
+.streak-info {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 15px;
+    padding: 20px;
+}
+
+.info-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.info-item:last-child {
+    border-bottom: none;
+}
+
+.info-item i {
+    color: #667eea;
+    width: 25px;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
     .dashboard-content {
@@ -804,12 +844,12 @@
                     </div>
                 </div>
 
-                <div class="stat-card student-stat" data-stat="reading-streak" onclick="alert('Reading streak feature coming soon!')" style="cursor: pointer;">
+                <div class="stat-card student-stat" data-stat="reading-streak" onclick="showReadingStreakModal()" style="cursor: pointer;">
                     <div class="stat-icon bg-success">
                         <i class="fas fa-fire"></i>
                     </div>
                     <div class="stat-content">
-                        <h3 id="reading-streak-count">7</h3>
+                        <h3 id="reading-streak-count">{{ reading_streak_count }}</h3>
                         <p>Reading Streak</p>
                         <div class="stat-trend positive">
                             <i class="fas fa-arrow-up"></i>
@@ -1143,7 +1183,7 @@
                 break;
             case 'reading-streak':
                 // Show reading streak modal or navigate to reading history
-                alert('Reading streak feature coming soon!');
+                showReadingStreakModal();
                 break;
             default:
                 console.log('Unknown student stat type:', statType);
@@ -1202,7 +1242,7 @@
                     break;
                 case 'reading-streak':
                     // Show reading streak modal or navigate to reading history
-                    alert('Reading streak feature coming soon!');
+                    showReadingStreakModal();
                     break;
                 default:
                     console.log('Unknown student stat type:', statType);
@@ -1317,6 +1357,71 @@
                     }
                 }
             }
+        });
+    }
+
+    // Show reading streak modal
+    function showReadingStreakModal() {
+        const streakCount = document.getElementById('reading-streak-count').textContent;
+        
+        // Create modal HTML
+        const modalHtml = `
+            <div class="modal fade" id="readingStreakModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content glass-card">
+                        <div class="modal-header">
+                            <h5 class="modal-title">
+                                <i class="fas fa-fire me-2"></i>Reading Streak
+                            </h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="text-center mb-4">
+                                <div class="streak-display">
+                                    <i class="fas fa-fire fa-3x text-warning mb-3"></i>
+                                    <h2 class="streak-count">${streakCount}</h2>
+                                    <p class="streak-label">Current Streak (Days)</p>
+                                </div>
+                            </div>
+                            <div class="streak-info">
+                                <div class="info-item">
+                                    <i class="fas fa-book-reader me-2"></i>
+                                    <span>Keep reading books to maintain your streak!</span>
+                                </div>
+                                <div class="info-item">
+                                    <i class="fas fa-calendar-check me-2"></i>
+                                    <span>Streak updates when you issue books</span>
+                                </div>
+                                <div class="info-item">
+                                    <i class="fas fa-trophy me-2"></i>
+                                    <span>Longest streak: ${streakCount} days</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Remove existing modal if present
+        const existingModal = document.getElementById('readingStreakModal');
+        if (existingModal) {
+            existingModal.remove();
+        }
+        
+        // Add modal to body
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+        
+        // Show modal
+        const modal = new bootstrap.Modal(document.getElementById('readingStreakModal'));
+        modal.show();
+        
+        // Clean up modal after it's hidden
+        document.getElementById('readingStreakModal').addEventListener('hidden.bs.modal', function () {
+            this.remove();
         });
     }
 </script>
