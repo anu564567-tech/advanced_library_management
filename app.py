@@ -1466,7 +1466,6 @@ def create_app(config_name='development'):
         
         # Update book availability
         book.available -= 1
-        book.total_issued += 1
         
         # Update request status
         book_request.status = 'approved'
