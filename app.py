@@ -588,8 +588,9 @@ def create_app(config_name='development'):
             description = request.form.get('description', '').strip()
             edition = request.form.get('edition', '').strip()
             language = request.form.get('language', 'English').strip()
-            pages = request.form.get('pages', 0, type=int)
-            price = request.form.get('price', 0, type=float)
+            pages = request.form.get('pages', 1, type=int)
+            price = request.form.get('price', 1, type=float)
+            rack_number = request.form.get('rack_number', '').strip()
             
             # Validation
             if not all([isbn, title, author]):
