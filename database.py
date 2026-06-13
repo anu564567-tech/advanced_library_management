@@ -59,54 +59,42 @@ class User(UserMixin, db.Model):
 
 class Book(db.Model):
     """Book model for library inventory"""
-
+    
     __tablename__ = 'books'
-
+    
     id = db.Column(db.Integer, primary_key=True)
     isbn = db.Column(db.String(20), unique=True, nullable=False, index=True)
     title = db.Column(db.String(200), nullable=False)
     author = db.Column(db.String(100), nullable=False)
-
-    # NEW FIELD
-    rack_number = db.Column(db.String(20))
-
     publication = db.Column(db.String(100))
     category = db.Column(db.String(50))
     language = db.Column(db.String(20), default='English')
     edition = db.Column(db.String(20))
     pages = db.Column(db.Integer)
     price = db.Column(db.Float)
+    rack_number = db.Column(db.String(20))
     description = db.Column(db.Text)
     quantity = db.Column(db.Integer, default=1, nullable=False)
     available = db.Column(db.Integer, default=1, nullable=False)
-
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(
-        db.DateTime,
-        default=datetime.utcnow,
-        onupdate=datetime.utcnow
-    )
-
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
     # Relationships
-    issued_copies = db.relationship(
-        'IssuedBook',
-        backref='book',
-        lazy='dynamic',
-        cascade='all, delete-orphan'
-    )
-
+    issued_copies = db.relationship('IssuedBook', backref='book', lazy='dynamic', cascade='all, delete-orphan')
+    
     @property
     def issued_count(self):
         """Get number of currently issued copies"""
         return self.issued_copies.filter_by(is_returned=False).count()
-
+    
     @property
     def is_available(self):
         """Check if book is available for issue"""
         return self.available > 0
-
+    
     def __repr__(self):
         return f'<Book {self.title} by {self.author}>'
+
 
 class IssuedBook(db.Model):
     """Issued book model for tracking book loans"""
