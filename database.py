@@ -72,7 +72,6 @@ class Book(db.Model):
     edition = db.Column(db.String(20))
     pages = db.Column(db.Integer)
     price = db.Column(db.Float)
-    rack_number = db.Column(db.String(20))
     description = db.Column(db.Text)
     quantity = db.Column(db.Integer, default=1, nullable=False)
     available = db.Column(db.Integer, default=1, nullable=False)
@@ -221,7 +220,7 @@ class BookRequest(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
-    # Relationships
+    # Relationships 
     user = db.relationship('User', backref=db.backref('book_requests', lazy='dynamic', cascade='all, delete-orphan'))
     
     def approve_request(self, notes=None):
@@ -497,4 +496,4 @@ if __name__ == '__main__':
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     
     init_db(app)
-    create_sample_data()
+    create_sample_data() 
